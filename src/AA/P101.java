@@ -1,26 +1,25 @@
 package AA;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
+import java.util.Comparator;
 
 public class P101 {
     public static ArrayList<Integer> bestWay;
-    public static Set<Node> nodes;
+    public static Map<Integer, Node> nodes;
+    public static Comparator<Node> comparator = new NodeComparator();
+    public static PriorityQueue<Node> priorityQueue = new PriorityQueue<>(comparator);
     public static int start, last;
+    public static int best_velocity = -1;
+
 
     public static void main(String[] args){
-        String[] data = {"1 3", "1 2 3", "2 3 1", "1 4 2", "4 3 3"};
-
+        String[] data = {"1 3", "1 2 3", "2 3 1", "1 4 2", "4 3 3", "2 4 3"};
         bestSolution(data);
     }
 
     public static ArrayList<Integer> bestSolution(String[] data){
         bestWay = new ArrayList<Integer>();
-        nodes = new HashSet<Node>();
+        nodes = new HashMap<>();
         String[] splited = data[0].split("\\s+");
 
         if(splited[0] == splited[1]){
@@ -32,18 +31,46 @@ public class P101 {
             initialize(data);
         }
 
+        //Inicio backtracking
+        Node initial = nodes.get(start);
+        initial.max_vel = Integer.MAX_VALUE;
+        initial.alReadyChecked.add(initial.id);
+        expand(initial);
+
+        Node n;
+
+        while (!priorityQueue.isEmpty()) {
+            n = priorityQueue.poll();
+            n.max_vel = Math.min(n.parents.get(n.ancestor), n.max_vel);
+            n.alReadyChecked.add(n.id);
+            if(n.id == last && n.max_vel > best_velocity) {
+                best_velocity = n.max_vel;
+                bestWay = n.alReadyChecked;
+            }else
+                expand(n);
+
+        }
+        System.out.println(best_velocity);
         return bestWay;
     }
-
-    private static void backTracking(){
-
+    private static void expand(Node n){
+        for (int i = 0; i < n.neighbours.size(); i++) {
+            //if(n.neighbours.get(i).neighB == last)
+            if (n.neighbours.get(i).isFeasible(n.alReadyChecked)) {
+                Node no = nodes.get(n.neighbours.get(i).neighB);
+                no.alReadyChecked = n.alReadyChecked;
+                no.ancestor = n.id;
+                no.max_vel = n.max_vel;
+                no.parents.put(no.ancestor, n.neighbours.get(i).velocity);
+                priorityQueue.add(no);
+            }
+        }
     }
-
     private static void createNodesWithoutNeighbour(int newNode){
         Node n = new Node();
-        n.node = newNode;
+        n.id = newNode;
         n.initNeighbours();
-        nodes.add(n);
+        nodes.put(newNode, n);
     }
 
     private static void initialize(String[] data){
@@ -53,7 +80,6 @@ public class P101 {
         int i=1, actual;
 
         createNodesWithoutNeighbour(start);
-
         createNodesWithoutNeighbour(last);
 
         for (;i<data.length;i++){
@@ -62,23 +88,24 @@ public class P101 {
 
             if(!findNode(actual)){
                 n = new Node();
-                n.node = actual;
+                n.id = actual;
                 n.initNeighbours();
                 neighbour = new Neighbour();
                 n.initNeighbours();
                 neighbour.neighB = Integer.parseInt(splited[1]);
                 neighbour.velocity = Integer.parseInt(splited[2]);
                 n.neighbours.add(neighbour);
-                nodes.add(n);
+                nodes.put(actual, n);
             }
             else{
                 neighbour = new Neighbour();
                 neighbour.neighB = Integer.parseInt(splited[1]);
                 neighbour.velocity = Integer.parseInt(splited[2]);
 
-                for (Node no : nodes) {
-                    if (no.node==actual){
-                        no.neighbours.add(neighbour);
+                for (Iterator<Node> i1 = nodes.values().iterator(); i1.hasNext();) {
+                    Node toAdd = i1.next();
+                    if (toAdd.id == actual){
+                        toAdd.neighbours.add(neighbour);
                     }
                 }
             }
@@ -91,15 +118,15 @@ public class P101 {
     private static void mergeNeighbours() {
         Neighbour neighbour;
 
-        for (Iterator<Node> i1 = nodes.iterator(); i1.hasNext(); ) {
+        for (Iterator<Node> i1 = nodes.values().iterator(); i1.hasNext(); ) {
             Node f1 = i1.next();
-            for (Iterator<Node> i2 = nodes.iterator(); i2.hasNext(); ) {
+            for (Iterator<Node> i2 = nodes.values().iterator(); i2.hasNext(); ) {
                 Node f2 = i2.next();
-                if(!(f1.node == f2.node)) {
+                if(!(f1.id == f2.id)) {
                     int k;
-                    if((k=findNeighbour(f2.neighbours, f1.node))!=-1 && findNeighbour(f1.neighbours, f2.node)==-1) {
+                    if((k=findNeighbour(f2.neighbours, f1.id))!=-1 && findNeighbour(f1.neighbours, f2.id)==-1) {
                         neighbour = new Neighbour();
-                        neighbour.neighB = f2.node;
+                        neighbour.neighB = f2.id;
                         neighbour.velocity = f2.neighbours.get(k).velocity;
                         f1.neighbours.add(neighbour);
                     }
@@ -115,14 +142,13 @@ public class P101 {
                 it = i;
             }
         }
-
         return it;
     }
 
     private static void printNodes(){
-        for (Iterator<Node> it = nodes.iterator(); it.hasNext(); ) {
+        for (Iterator<Node> it = nodes.values().iterator(); it.hasNext(); ) {
             Node f = it.next();
-            System.out.print(f.node + " neighbours: ");
+            System.out.print(f.id + " neighbours: ");
             for(int i=0;i<f.neighbours.size();i++){
                 System.out.print(f.neighbours.get(i).neighB);
                 System.out.print(" velocity[" + f.neighbours.get(i).velocity + "]");
@@ -135,28 +161,56 @@ public class P101 {
     private static Boolean findNode(int actual){
         Boolean ok = false;
 
-        for (Iterator<Node> it = nodes.iterator(); it.hasNext(); ) {
-            Node f = it.next();
-
-            if(f.node == actual){
+        for (Iterator<Integer> i = nodes.keySet().iterator(); i.hasNext();) {
+            Node f = nodes.get(i.next());
+            if(f.id == actual)
                 ok = true;
-            }
         }
 
         return ok;
     }
 
     public static class Node {
-        private int node;
+        private int id;
+        private int max_vel = 0;
+        private int ancestor;
+        private ArrayList<Integer> alReadyChecked = new ArrayList<>();
+        private ArrayList<String> wayToSolution = new ArrayList<>();
         private ArrayList<Neighbour> neighbours;
+        private Map<Integer,Integer> parents = new HashMap<>();
 
         public void initNeighbours(){
             neighbours = new ArrayList<Neighbour>();
         }
+
     }
 
     public static class Neighbour {
         private int neighB;
         private int velocity;
+
+        public boolean isFeasible(ArrayList<Integer> a){
+            for (int element:a)
+                if(element == neighB)
+                    return false;
+            return true;
+        }
+    }
+
+    public static class NodeComparator implements Comparator<Node>
+    {
+        @Override
+        public int compare(Node x, Node y)
+        {
+            if (x.max_vel > y.max_vel)
+            {
+                return -1;
+            }
+            if (x.max_vel < y.max_vel)
+            {
+                return 1;
+            }
+            return 0;
+        }
     }
 }
