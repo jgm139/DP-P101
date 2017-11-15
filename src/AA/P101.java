@@ -4,8 +4,8 @@ import java.util.*;
 import java.util.Comparator;
 
 public class P101 {
-    public static ArrayList<Integer> bestWay;
-    public static Map<Integer, Node> nodes;
+    public static ArrayList<Integer> bestWay = new ArrayList<Integer>();
+    public static Map<Integer, Node> nodes = new HashMap<>();;
     public static Comparator<Node> comparator = new NodeComparator();
     public static PriorityQueue<Node> priorityQueue = new PriorityQueue<>(comparator);
     public static int start, last;
@@ -14,17 +14,14 @@ public class P101 {
 
     public static void main(String[] args){
         String[] data = {"1 3", "1 2 3", "2 3 1", "1 4 2", "4 3 3", "2 4 3"};
-        bestSolution(data);
+        System.out.println(bestSolution(data));
     }
 
     public static ArrayList<Integer> bestSolution(String[] data){
-        bestWay = new ArrayList<Integer>();
-        nodes = new HashMap<>();
         String[] splited = data[0].split("\\s+");
 
-        if(splited[0] == splited[1]){
+        if(splited[0] == splited[1])
             return bestWay;
-        }
         else{
             start = Integer.parseInt(splited[0]);
             last = Integer.parseInt(splited[1]);
@@ -33,37 +30,40 @@ public class P101 {
 
         //Inicio backtracking
         Node initial = nodes.get(start);
-        initial.max_vel = Integer.MAX_VALUE;
-        initial.alReadyChecked.add(initial.id);
-        expand(initial);
+        if (initial.isFeasible(initial.alReadyChecked)) {
+            initial.max_vel = Integer.MAX_VALUE;
+            initial.alReadyChecked.add(initial.id);
+            expand(initial);
+        }
 
         Node n;
 
         while (!priorityQueue.isEmpty()) {
             n = priorityQueue.poll();
-            n.max_vel = Math.min(n.parents.get(n.ancestor), n.max_vel);
-            n.alReadyChecked.add(n.id);
-            if(n.id == last && n.max_vel > best_velocity) {
-                best_velocity = n.max_vel;
-                bestWay = n.alReadyChecked;
-            }else
-                expand(n);
+            if (n.isFeasible(n.alReadyChecked)){
+                n.max_vel = Math.min(n.parents.get(n.ancestor), n.max_vel);
+                n.alReadyChecked.add(n.id);
+                if(n.id == last && n.max_vel >= best_velocity) {
+                    best_velocity = n.max_vel;
+                    bestWay = n.alReadyChecked;
+                }else
+                    expand(n);
+            }
+
 
         }
-        System.out.println(best_velocity);
+        System.out.println();
+        System.out.println("Velocity: " + best_velocity);
         return bestWay;
     }
     private static void expand(Node n){
         for (int i = 0; i < n.neighbours.size(); i++) {
-            //if(n.neighbours.get(i).neighB == last)
-            if (n.neighbours.get(i).isFeasible(n.alReadyChecked)) {
-                Node no = nodes.get(n.neighbours.get(i).neighB);
-                no.alReadyChecked = n.alReadyChecked;
-                no.ancestor = n.id;
-                no.max_vel = n.max_vel;
-                no.parents.put(no.ancestor, n.neighbours.get(i).velocity);
-                priorityQueue.add(no);
-            }
+            Node no = nodes.get(n.neighbours.get(i).neighB);
+            no.alReadyChecked = new ArrayList<>(n.alReadyChecked);
+            no.ancestor = n.id;
+            no.max_vel = n.max_vel;
+            no.parents.put(no.ancestor, n.neighbours.get(i).velocity);
+            priorityQueue.add(no);
         }
     }
     private static void createNodesWithoutNeighbour(int newNode){
@@ -175,7 +175,6 @@ public class P101 {
         private int max_vel = 0;
         private int ancestor;
         private ArrayList<Integer> alReadyChecked = new ArrayList<>();
-        private ArrayList<String> wayToSolution = new ArrayList<>();
         private ArrayList<Neighbour> neighbours;
         private Map<Integer,Integer> parents = new HashMap<>();
 
@@ -183,34 +182,29 @@ public class P101 {
             neighbours = new ArrayList<Neighbour>();
         }
 
+        public boolean isFeasible(ArrayList<Integer> a){
+            for (int element:a)
+                if(element == id)
+                    return false;
+            return true;
+        }
+
     }
 
     public static class Neighbour {
         private int neighB;
         private int velocity;
-
-        public boolean isFeasible(ArrayList<Integer> a){
-            for (int element:a)
-                if(element == neighB)
-                    return false;
-            return true;
-        }
     }
 
-    public static class NodeComparator implements Comparator<Node>
-    {
+    public static class NodeComparator implements Comparator<Node>{
         @Override
-        public int compare(Node x, Node y)
-        {
+        public int compare(Node x, Node y){
+            int toReturn=0;
             if (x.max_vel > y.max_vel)
-            {
-                return -1;
-            }
+                toReturn = -1;
             if (x.max_vel < y.max_vel)
-            {
-                return 1;
-            }
-            return 0;
+                toReturn = 1;
+            return toReturn;
         }
     }
 }
