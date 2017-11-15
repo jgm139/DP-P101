@@ -199,12 +199,7 @@ public class P101 {
     public static class NodeComparator implements Comparator<Node>{
         @Override
         public int compare(Node x, Node y){
-            int toReturn=0;
-            if (x.max_vel > y.max_vel)
-                toReturn = -1;
-            if (x.max_vel < y.max_vel)
-                toReturn = 1;
-            return toReturn;
+            return x.max_vel == y.max_vel ? 0: x.max_vel<y.max_vel ? 1 : -1;
         }
     }
 }
