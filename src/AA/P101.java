@@ -10,27 +10,35 @@ public class P101 {
     public static PriorityQueue<Node> priorityQueue = new PriorityQueue<>(comparator);
     public static int start, last;
     public static int best_velocity = -1;
+    public static int contador = 0;
+    public static long tiempoInicializacion;
 
 
     public static void main(String[] args){
-        String[] data = {"1 3", "1 2 3", "2 3 1", "1 4 2", "4 3 3", "2 4 3"};
+        final long startTime = System.nanoTime();
+        String[] data = {"1 4", "1 8 3", "1 7 2", "3 7 3", "7 9 4", "3 5 3", "3 9 5", "9 5 5", "3 4 3", "4 5 4", "4 10 2", "4 6 3", "10 5 4", "6 10 4", "6 2 3", "2 8 4", "1 4 1", "11 6 4", "11 4 3", "5 11 5"
+                , "12 2 5", "12 8 4", "12 7 4", "12 9 3", "13 5 4", "13 11 3", "14 13 3", "14 11 3", "14 6 3"};
         System.out.println(bestSolution(data));
+        final long duration = System.nanoTime() - startTime;
+        System.out.println("Tiempo algoritmo: "+(duration-tiempoInicializacion));
     }
-
+    //Pesimista: Camino aleatorio hacia el nodo final, sino encuentra 0, si encuentra x
     public static ArrayList<Integer> bestSolution(String[] data){
         String[] splited = data[0].split("\\s+");
 
-        if(splited[0] == splited[1])
+        if(splited[0].equals(splited[1])) {
             return bestWay;
-        else{
+        }else{
             start = Integer.parseInt(splited[0]);
             last = Integer.parseInt(splited[1]);
+            final long startTime1 = System.nanoTime();
             initialize(data);
+            tiempoInicializacion = System.nanoTime() - startTime1;
+            System.out.println("Tiempo inicialización: " + tiempoInicializacion);
         }
-
         //Inicio backtracking
         Node initial = nodes.get(start);
-        if (initial.isFeasible(initial.alReadyChecked)) {
+        if (initial.isFeasible()) {
             initial.max_vel = Integer.MAX_VALUE;
             initial.alReadyChecked.add(initial.id);
             expand(initial);
@@ -40,31 +48,72 @@ public class P101 {
 
         while (!priorityQueue.isEmpty()) {
             n = priorityQueue.poll();
-            if (n.isFeasible(n.alReadyChecked)){
-                n.max_vel = Math.min(n.parents.get(n.ancestor), n.max_vel);
+            if (n.isFeasible()){
+                n.max_vel = Math.min(n.arrivedWithV, n.max_vel);
                 n.alReadyChecked.add(n.id);
-                if(n.id == last && n.max_vel >= best_velocity) {
-                    best_velocity = n.max_vel;
-                    bestWay = n.alReadyChecked;
+                if(n.id == last) {
+                    if (n.max_vel > best_velocity){
+                        best_velocity = n.max_vel;
+                        bestWay = n.alReadyChecked;
+                    }
                 }else
                     expand(n);
             }
-
-
         }
-        System.out.println();
+        System.out.println(contador);
         System.out.println("Velocity: " + best_velocity);
         return bestWay;
     }
     private static void expand(Node n){
         for (int i = 0; i < n.neighbours.size(); i++) {
-            Node no = nodes.get(n.neighbours.get(i).neighB);
-            no.alReadyChecked = new ArrayList<>(n.alReadyChecked);
-            no.ancestor = n.id;
-            no.max_vel = n.max_vel;
-            no.parents.put(no.ancestor, n.neighbours.get(i).velocity);
-            priorityQueue.add(no);
+            //if(n.cotaOptimista(n.neighbours.get(i))) {
+                Node no = new Node(nodes.get(n.neighbours.get(i).neighB));
+                no.alReadyChecked = new ArrayList<>(n.alReadyChecked);
+                no.ancestor = n;
+                no.max_vel = n.max_vel;
+                no.arrivedWithV = n.neighbours.get(i).velocity;
+
+                contador++;
+                priorityQueue.add(no);
+            //}
         }
+    }
+
+    /*
+    CONST n = ...; (* numero de vertices del grafo *)
+    TYPE MATRIZ = ARRAY [1..n],[1..n] OF CARDINAL;
+    MARCA = ARRAY [1..n] OF BOOLEAN;(* elementos ya considerados*)
+    SOLUCION = ARRAY [2..n] OF CARDINAL;
+
+    PROCEDURE Dijkstra(VAR L:MATRIZ;VAR D:SOLUCION);
+    VAR i,j,menor,pos,s:CARDINAL; S:MARCA;
+    BEGIN
+    FOR i:=2 TO n DO
+    S[i]:=FALSE;
+    D[i]:=L[1,i]
+    END;
+    S[1]:=TRUE;
+    FOR i:=2 TO n-1 DO
+    menor:=Menor(D,S,pos);
+    S[pos]:=TRUE;
+    FOR j:=2 TO n DO
+    IF NOT(S[j]) THEN
+    D[j]:= Min2(D[j],D[pos]+L[pos,j])
+    END;
+    END;
+    END
+    END Dijkstra;
+    */
+
+    private static int AlgoritmoVoraz(){
+        ArrayList<Integer> checked = new ArrayList<>();
+        Node initial = nodes.get(start);
+        if (initial.isFeasible()) {
+            initial.max_vel = Integer.MAX_VALUE;
+            initial.alReadyChecked.add(initial.id);
+
+        }
+        return 0;
     }
     private static void createNodesWithoutNeighbour(int newNode){
         Node n = new Node();
@@ -83,10 +132,10 @@ public class P101 {
         createNodesWithoutNeighbour(last);
 
         for (;i<data.length;i++){
-            splited = data[i].split("\\s+");          //edge separated nA - nB - velocity
+            splited = data[i].split("\\s+");         //edge separated nA - nB - velocity
             actual = Integer.parseInt(splited[0]);
 
-            if(!findNode(actual)){
+            if (nodes.get(actual) == null) {
                 n = new Node();
                 n.id = actual;
                 n.initNeighbours();
@@ -96,53 +145,43 @@ public class P101 {
                 neighbour.velocity = Integer.parseInt(splited[2]);
                 n.neighbours.add(neighbour);
                 nodes.put(actual, n);
-            }
-            else{
+            } else {
                 neighbour = new Neighbour();
                 neighbour.neighB = Integer.parseInt(splited[1]);
                 neighbour.velocity = Integer.parseInt(splited[2]);
 
-                for (Iterator<Node> i1 = nodes.values().iterator(); i1.hasNext();) {
+                for (Iterator<Node> i1 = nodes.values().iterator(); i1.hasNext(); ) {
                     Node toAdd = i1.next();
-                    if (toAdd.id == actual){
+                    if (toAdd.id == actual) {
                         toAdd.neighbours.add(neighbour);
                     }
                 }
             }
-        }
+            actual = Integer.parseInt(splited[1]);
+            if (nodes.get(actual) == null) {
+                n = new Node();
+                n.id = actual;
+                n.initNeighbours();
+                neighbour = new Neighbour();
+                n.initNeighbours();
+                neighbour.neighB = Integer.parseInt(splited[0]);
+                neighbour.velocity = Integer.parseInt(splited[2]);
+                n.neighbours.add(neighbour);
+                nodes.put(actual, n);
+            } else {
+                neighbour = new Neighbour();
+                neighbour.neighB = Integer.parseInt(splited[0]);
+                neighbour.velocity = Integer.parseInt(splited[2]);
 
-        mergeNeighbours();
-        printNodes();
-    }
-
-    private static void mergeNeighbours() {
-        Neighbour neighbour;
-
-        for (Iterator<Node> i1 = nodes.values().iterator(); i1.hasNext(); ) {
-            Node f1 = i1.next();
-            for (Iterator<Node> i2 = nodes.values().iterator(); i2.hasNext(); ) {
-                Node f2 = i2.next();
-                if(!(f1.id == f2.id)) {
-                    int k;
-                    if((k=findNeighbour(f2.neighbours, f1.id))!=-1 && findNeighbour(f1.neighbours, f2.id)==-1) {
-                        neighbour = new Neighbour();
-                        neighbour.neighB = f2.id;
-                        neighbour.velocity = f2.neighbours.get(k).velocity;
-                        f1.neighbours.add(neighbour);
-                    }
+                for (Iterator<Node> i1 = nodes.values().iterator(); i1.hasNext(); ) {
+                    Node toAdd = i1.next();
+                    if (toAdd.id == actual)
+                        toAdd.neighbours.add(neighbour);
                 }
             }
         }
-    }
-
-    private static int findNeighbour(ArrayList<Neighbour> neighbours, int node){
-        int it = -1;
-        for(int i=0;i<neighbours.size();i++) {
-            if(neighbours.get(i).neighB == node){
-                it = i;
-            }
-        }
-        return it;
+        //cantidadNodos = nodes.size();
+        //printNodes();
     }
 
     private static void printNodes(){
@@ -158,37 +197,43 @@ public class P101 {
         }
     }
 
-    private static Boolean findNode(int actual){
-        Boolean ok = false;
-
-        for (Iterator<Integer> i = nodes.keySet().iterator(); i.hasNext();) {
-            Node f = nodes.get(i.next());
-            if(f.id == actual)
-                ok = true;
-        }
-
-        return ok;
-    }
-
     public static class Node {
         private int id;
         private int max_vel = 0;
-        private int ancestor;
+        private Node ancestor;
+        private int arrivedWithV;
         private ArrayList<Integer> alReadyChecked = new ArrayList<>();
         private ArrayList<Neighbour> neighbours;
-        private Map<Integer,Integer> parents = new HashMap<>();
 
+        public Node(){}
+        public Node(Node n){
+            this.id = n.id;
+            this.max_vel = n.max_vel;
+            this.ancestor = n.ancestor;
+            alReadyChecked = new ArrayList<>(n.alReadyChecked);
+            neighbours = n.neighbours;
+        }
         public void initNeighbours(){
             neighbours = new ArrayList<Neighbour>();
         }
 
-        public boolean isFeasible(ArrayList<Integer> a){
-            for (int element:a)
+        public boolean cotaOptimista(Neighbour neighbour){
+            return neighbour.velocity > best_velocity;
+        }
+
+        public int cotaOptimista(){
+            int toReturn = best_velocity;
+            for(int i=0;i<neighbours.size();i++)
+                toReturn = Math.max(toReturn, neighbours.get(i).velocity);
+            return toReturn;
+        }
+
+        public boolean isFeasible(){
+            for (int element: alReadyChecked)
                 if(element == id)
                     return false;
             return true;
         }
-
     }
 
     public static class Neighbour {
@@ -199,7 +244,7 @@ public class P101 {
     public static class NodeComparator implements Comparator<Node>{
         @Override
         public int compare(Node x, Node y){
-            return x.max_vel == y.max_vel ? 0: x.max_vel<y.max_vel ? 1 : -1;
+            return x.alReadyChecked.size() == y.alReadyChecked.size() ? 1 : x.alReadyChecked.size() < y.alReadyChecked.size() ? 1:-1;
         }
     }
 }
