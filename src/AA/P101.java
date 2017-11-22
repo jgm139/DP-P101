@@ -1,8 +1,8 @@
 package AA;
 
-import java.io.FileNotFoundException;
+/*import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.UnsupportedEncodingException;*/
 import java.util.*;
 import java.util.Comparator;
 
@@ -13,10 +13,10 @@ public class P101 {
     public static PriorityQueue<Node> priorityQueue = new PriorityQueue<>(comparator);
     public static int start, last;
     public static int best_velocity = -1;
-    public static int contador = 0;  public static long tiempoInicializacion; public static PrintWriter writer;
+    //public static int contador = 0;  public static long tiempoInicializacion; public static PrintWriter writer;
 
 
-    public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
+    public static void main(String[] args) /*throws FileNotFoundException, UnsupportedEncodingException */{
         /*String[] data = {"1 5", "1 4 3", "1 18 3", "1 37 2", "1 10 1", "2 19 3", "2 37 3", "2 13 1", "2 29 4", "3 30 2", "3 21 3", "3 32 6", "3 23 2",
                 "4 16 4", "4 27 6", "4 1 4", "4 21 6", "5 29 2", "5 17 4", "5 10 3", "5 18 3", "6 7 6", "6 24 1", "6 14 6", "6 37 6", "7 3 3",
                 "7 36 3", "7 26 5", "7 23 1", "8 22 6", "8 10 5", "8 5 5", "8 7 5", "9 3 4", "9 2 5", "9 24 6", "9 29 4", "10 26 5", "10 17 3",
@@ -29,10 +29,10 @@ public class P101 {
                 "30 16 6", "30 26 2", "30 5 6", "30 27 5", "31 7 3", "31 19 1", "31 13 3", "31 11 1", "32 12 4", "32 10 1", "32 7 6", "32 14 1", "33 19 2",
                 "33 21 3", "33 34 3", "33 8 4", "34 17 1", "34 8 6", "34 29 4", "34 2 6", "35 13 4", "35 34 6", "35 19 2", "35 24 1", "36 15 4", "36 27 6",
                 "36 33 1", "36 24 6", "37 23 3", "37 26 4", "37 15 3", "37 17 5", "38 33 1", "38 11 6", "38 3 4", "38 23 1", "39 21 2", "39 22 6", "39 5 5",
-                "39 15 4", "40 25 2", "40 7 5", "40 19 5", "40 31 4"};*/
-        String[] data = NodeGenerator(1,5,40, 39);
-        writer = new PrintWriter("paraCopiar.txt", "UTF-8");
+                "39 15 4", "40 25 2", "40 7 5", "40 19 5", "40 31 4"};
+        //String[] data = NodeGenerator(1,5,40, 39);
 
+        writer = new PrintWriter("paraCopiar.txt", "UTF-8");
         final long startTime = System.nanoTime();
         bestSolution(data);
         final long duration = System.nanoTime() - startTime;
@@ -42,10 +42,10 @@ public class P101 {
             e.printStackTrace();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
-    public static void toFile(long duration, String[] data) throws FileNotFoundException, UnsupportedEncodingException {
+    /*public static void toFile(long duration, String[] data) throws FileNotFoundException, UnsupportedEncodingException {
 
         writer = new PrintWriter("ultimoGrafo.txt", "UTF-8");
         writer.println("Tiempo inicialización: "+tiempoInicializacion);
@@ -63,7 +63,7 @@ public class P101 {
         }
         writer.close();
 
-    }
+    }*/
 
     public static ArrayList<Integer> bestSolution(String[] data){
         String[] splited = data[0].split("\\s+");
@@ -74,11 +74,11 @@ public class P101 {
             start = Integer.parseInt(splited[0]);
             last = Integer.parseInt(splited[1]);
 
-            final long startTime1 = System.nanoTime();
+            //final long startTime1 = System.nanoTime();
             initialize(data);
-            tiempoInicializacion = System.nanoTime() - startTime1;
+            //tiempoInicializacion = System.nanoTime() - startTime1;
 
-            writer.println("Para volver a probar: ");
+            /*writer.println("Para volver a probar: ");
 
             for(int i=0;i<data.length;i++) {
                 if(Math.floorMod(i, 13)==0)
@@ -91,16 +91,17 @@ public class P101 {
 
             writer.println();
             writer.println();
-            writer.close();
+            writer.close();*/
 
         }
-        System.out.println("Inicialización acabada.");
+        //System.out.println("Inicialización acabada.");
         //Inicio backtracking
         Node n = nodes.get(start);
         n.max_vel = Integer.MAX_VALUE;
 
         priorityQueue.add(n);
         while (!priorityQueue.isEmpty()) {
+        //contador++;
             n = priorityQueue.poll();
             if(n.max_vel > best_velocity) {
                 if (n.id == last && n.max_vel > best_velocity) {
@@ -124,9 +125,6 @@ public class P101 {
                 Node no = new Node(nodes.get(neighbour.neighB));
                 no.alReadyChecked = new ArrayList<>(n.alReadyChecked);
                 no.max_vel = Math.min(neighbour.velocity, n.max_vel);
-
-                contador++;
-                System.out.println(contador);
                 priorityQueue.add(no);
             }
         }
@@ -236,9 +234,11 @@ public class P101 {
         }
 
         public int cotaOptimista(){
-            int toReturn = best_velocity;
-            for(int i=0;i<neighbours.size();i++)
-                toReturn = Math.max(toReturn, neighbours.get(i).velocity);
+            int toReturn = -1;
+            for(int i=0;i<neighbours.size();i++) {
+                if(neighbours.get(i).velocity > best_velocity)
+                    toReturn = Math.max(toReturn, neighbours.get(i).velocity);
+            }
             return toReturn;
         }
 
@@ -259,7 +259,7 @@ public class P101 {
     public static class NodeComparator implements Comparator<Node>{
         @Override
         public int compare(Node x, Node y){
-            return  x.neighbours.size() > y.neighbours.size() ? 1:-1;
+            return  x.cotaOptimista() > y.cotaOptimista() ? 1:-1;
         }
     }
 }
