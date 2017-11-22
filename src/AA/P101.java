@@ -1,5 +1,8 @@
 package AA;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.Comparator;
 
@@ -15,12 +18,41 @@ public class P101 {
 
 
     public static void main(String[] args){
+        /*String[] data = {"1 4", "1 8 3", "1 7 2", "3 7 3", "7 9 4", "3 5 3", "3 9 5", "9 5 5", "3 4 3", "4 5 4", "4 10 2", "4 6 3", "10 5 4", "6 10 4", "6 2 3", "2 8 4", "1 4 1", "11 6 4", "11 4 3", "5 11 5"
+                , "12 2 5", "12 8 4", "12 7 4", "12 9 3", "13 5 4", "13 11 3", "14 13 3", "14 11 3", "14 6 3"};*/
+        String[] data = NodeGenerator(1,5,40, 4);
+
         final long startTime = System.nanoTime();
-        String[] data = {"1 4", "1 8 3", "1 7 2", "3 7 3", "7 9 4", "3 5 3", "3 9 5", "9 5 5", "3 4 3", "4 5 4", "4 10 2", "4 6 3", "10 5 4", "6 10 4", "6 2 3", "2 8 4", "1 4 1", "11 6 4", "11 4 3", "5 11 5"
-                , "12 2 5", "12 8 4", "12 7 4", "12 9 3", "13 5 4", "13 11 3", "14 13 3", "14 11 3", "14 6 3"};
-        System.out.println(bestSolution(data));
+        bestSolution(data);
         final long duration = System.nanoTime() - startTime;
-        System.out.println("Tiempo algoritmo: "+(duration-tiempoInicializacion));
+        try {
+            toFile(duration, data);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void toFile(long duration, String[] data) throws FileNotFoundException, UnsupportedEncodingException {
+
+        PrintWriter writer = new PrintWriter("ultimoGrafo.txt", "UTF-8");
+        writer.println("Tiempo inicialización: "+tiempoInicializacion);
+        writer.println("Tiempo algoritmo: "+(duration-tiempoInicializacion));
+        writer.println("Nodos explorados: "+contador);
+        writer.println("Velocidad: "+best_velocity);
+        writer.println("Camino: "+bestWay);
+        writer.println("Nodo inicial: "+data[0].split("\\s+")[0]);
+        writer.println("Nodo final: "+data[0].split("\\s+")[1]);
+        writer.print("Grafo: ");
+        for(int i=1;i<data.length;i++)
+            writer.print("["+data[i]+"] ");
+        writer.println();
+        writer.println();
+        writer.println("Para volver a probar: ");
+        for(int i=0;i<data.length;i++)
+            writer.print("\""+data[i]+"\", ");
+        writer.close();
     }
     //Pesimista: Camino aleatorio hacia el nodo final, sino encuentra 0, si encuentra x
     public static ArrayList<Integer> bestSolution(String[] data){
@@ -31,11 +63,12 @@ public class P101 {
         }else{
             start = Integer.parseInt(splited[0]);
             last = Integer.parseInt(splited[1]);
+
             final long startTime1 = System.nanoTime();
             initialize(data);
             tiempoInicializacion = System.nanoTime() - startTime1;
-            System.out.println("Tiempo inicialización: " + tiempoInicializacion);
         }
+        System.out.println("Inicialización acabada.");
         //Inicio backtracking
         Node n = nodes.get(start);
         n.max_vel = Integer.MAX_VALUE;
@@ -54,8 +87,6 @@ public class P101 {
                 }
             }
         }
-        System.out.println("Nodos explorados: "+contador);
-        System.out.println("Velocity: " + best_velocity);
         return bestWay;
     }
     private static void expand(Node n){
@@ -84,36 +115,32 @@ public class P101 {
         }
         return 0;
     }
-    private static void createNodesWithoutNeighbour(int newNode){
+
+    private static void createNodes(int newNode, int newNeighbour, int newVelocity){
         Node n = new Node();
+        Neighbour neighbour = new Neighbour();
+
         n.id = newNode;
         n.initNeighbours();
-        nodes.put(newNode, n);
+        n.initNeighbours();
+        neighbour.neighB = newNeighbour;
+        neighbour.velocity = newVelocity;
+        n.neighbours.add(neighbour);
+        nodes.put(n.id, n);
     }
 
     private static void initialize(String[] data){
         String[] splited;
         Node n;
         Neighbour neighbour;
-        int i=1, actual;
-
-        createNodesWithoutNeighbour(start);
-        createNodesWithoutNeighbour(last);
+        int i=1, j=0, actual;
 
         for (;i<data.length;i++){
             splited = data[i].split("\\s+");         //edge separated nA - nB - velocity
             actual = Integer.parseInt(splited[0]);
 
-            if (nodes.get(actual) == null) {
-                n = new Node();
-                n.id = actual;
-                n.initNeighbours();
-                neighbour = new Neighbour();
-                n.initNeighbours();
-                neighbour.neighB = Integer.parseInt(splited[1]);
-                neighbour.velocity = Integer.parseInt(splited[2]);
-                n.neighbours.add(neighbour);
-                nodes.put(actual, n);
+            if (nodes.get(actual)==null) {
+                createNodes(actual, Integer.parseInt(splited[1]), Integer.parseInt(splited[2]));
             } else {
                 neighbour = new Neighbour();
                 neighbour.neighB = Integer.parseInt(splited[1]);
@@ -121,17 +148,11 @@ public class P101 {
 
                 nodes.get(actual).neighbours.add(neighbour);
             }
+
             actual = Integer.parseInt(splited[1]);
+
             if (nodes.get(actual) == null) {
-                n = new Node();
-                n.id = actual;
-                n.initNeighbours();
-                neighbour = new Neighbour();
-                n.initNeighbours();
-                neighbour.neighB = Integer.parseInt(splited[0]);
-                neighbour.velocity = Integer.parseInt(splited[2]);
-                n.neighbours.add(neighbour);
-                nodes.put(actual, n);
+                createNodes(actual, Integer.parseInt(splited[0]), Integer.parseInt(splited[2]));
             } else {
                 neighbour = new Neighbour();
                 neighbour.neighB = Integer.parseInt(splited[0]);
@@ -139,8 +160,10 @@ public class P101 {
 
                 nodes.get(actual).neighbours.add(neighbour);
             }
+
         }
-       // printNodes();
+
+        //printNodes();
     }
 
     private static void printNodes(){
@@ -154,6 +177,36 @@ public class P101 {
             }
             System.out.print('\n');
         }
+    }
+
+    public static String[] NodeGenerator(int initial, int last, int n, int v){
+        ArrayList<String> toReturn = new ArrayList<>();
+        toReturn.add(""+initial+" "+last);
+        ArrayList<Integer> added = new ArrayList<>();
+        Random r = new Random();
+        int nodeC=1;
+        int toAdd=0;
+        while(nodeC<=n) {
+            for (int i = 0; i < v; i++) {
+                toAdd = (r.nextInt(n ) + 1);
+                while(toAdd == nodeC){
+                    toAdd = (r.nextInt(n ) + 1);
+                }
+
+                for(int j=0;j<added.size();j++)
+                    if(added.get(j).equals(toAdd) || toAdd == nodeC){
+                        toAdd = (r.nextInt(n) + 1);
+                        j=-1;
+                    }
+                added.add(toAdd);
+                toReturn.add(nodeC + " " + toAdd + " " + (r.nextInt(7 - 1) + 1));
+            }
+            added.clear();
+            nodeC++;
+        }
+        String[] list = new String[toReturn.size()];
+        list = toReturn.toArray(list);
+        return list;
     }
 
     public static class Node {
@@ -203,7 +256,7 @@ public class P101 {
     public static class NodeComparator implements Comparator<Node>{
         @Override
         public int compare(Node x, Node y){
-            return  x.neighbours.size() <= y.neighbours.size() ? 1:-1;
+            return  x.neighbours.size() > y.neighbours.size() ? 1:-1;
         }
     }
 }
