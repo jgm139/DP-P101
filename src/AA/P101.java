@@ -10,17 +10,17 @@ public class P101 {
     public static PriorityQueue<Node> priorityQueue = new PriorityQueue<>(comparator);
     public static int start, last;
     public static int best_velocity = -1;
-    //public static int contador = 0;
-    //public static long tiempoInicializacion;
+    public static int contador = 0;
+    public static long tiempoInicializacion;
 
 
     public static void main(String[] args){
-        //final long startTime = System.nanoTime();
+        final long startTime = System.nanoTime();
         String[] data = {"1 4", "1 8 3", "1 7 2", "3 7 3", "7 9 4", "3 5 3", "3 9 5", "9 5 5", "3 4 3", "4 5 4", "4 10 2", "4 6 3", "10 5 4", "6 10 4", "6 2 3", "2 8 4", "1 4 1", "11 6 4", "11 4 3", "5 11 5"
                 , "12 2 5", "12 8 4", "12 7 4", "12 9 3", "13 5 4", "13 11 3", "14 13 3", "14 11 3", "14 6 3"};
         System.out.println(bestSolution(data));
-        //final long duration = System.nanoTime() - startTime;
-        //System.out.println("Tiempo algoritmo: "+(duration-tiempoInicializacion));
+        final long duration = System.nanoTime() - startTime;
+        System.out.println("Tiempo algoritmo: "+(duration-tiempoInicializacion));
     }
     //Pesimista: Camino aleatorio hacia el nodo final, sino encuentra 0, si encuentra x
     public static ArrayList<Integer> bestSolution(String[] data){
@@ -31,35 +31,31 @@ public class P101 {
         }else{
             start = Integer.parseInt(splited[0]);
             last = Integer.parseInt(splited[1]);
-            //final long startTime1 = System.nanoTime();
+            final long startTime1 = System.nanoTime();
             initialize(data);
-            //tiempoInicializacion = System.nanoTime() - startTime1;
-            //System.out.println("Tiempo inicialización: " + tiempoInicializacion);
+            tiempoInicializacion = System.nanoTime() - startTime1;
+            System.out.println("Tiempo inicialización: " + tiempoInicializacion);
         }
         //Inicio backtracking
-        Node initial = nodes.get(start);
-        if (initial.isFeasible()) {
-            initial.max_vel = Integer.MAX_VALUE;
-            initial.alReadyChecked.add(initial.id);
-            expand(initial);
-        }
+        Node n = nodes.get(start);
+        n.max_vel = Integer.MAX_VALUE;
 
-        Node n;
-
+        priorityQueue.add(n);
         while (!priorityQueue.isEmpty()) {
             n = priorityQueue.poll();
             if(n.max_vel > best_velocity) {
-                if (n.id == last) {
+                if (n.id == last && n.max_vel > best_velocity) {
+                    n.alReadyChecked.add(n.id);
                     best_velocity = n.max_vel;
                     bestWay = n.alReadyChecked;
-                } else if (n.isFeasible()) {
-                    n.alReadyChecked.add(n.id);
-                    expand(n);
+                } else
+                    if (n.isFeasible()) {
+                        expand(n);
                 }
             }
         }
-        //System.out.println(contador);
-        //System.out.println("Velocity: " + best_velocity);
+        System.out.println("Nodos explorados: "+contador);
+        System.out.println("Velocity: " + best_velocity);
         return bestWay;
     }
     private static void expand(Node n){
@@ -71,7 +67,7 @@ public class P101 {
                 no.alReadyChecked = new ArrayList<>(n.alReadyChecked);
                 no.max_vel = Math.min(neighbour.velocity, n.max_vel);
 
-                //contador++;
+                contador++;
                 priorityQueue.add(no);
             }
         }
@@ -144,7 +140,7 @@ public class P101 {
                 nodes.get(actual).neighbours.add(neighbour);
             }
         }
-        printNodes();
+       // printNodes();
     }
 
     private static void printNodes(){
@@ -194,6 +190,7 @@ public class P101 {
             for (int element: alReadyChecked)
                 if(element == id)
                     return false;
+            alReadyChecked.add(id);
             return true;
         }
     }
@@ -206,7 +203,7 @@ public class P101 {
     public static class NodeComparator implements Comparator<Node>{
         @Override
         public int compare(Node x, Node y){
-            return x.alReadyChecked.size() == y.alReadyChecked.size() ? 1 : x.alReadyChecked.size() < y.alReadyChecked.size() ? 1:-1;
+            return  x.neighbours.size() <= y.neighbours.size() ? 1:-1;
         }
     }
 }
