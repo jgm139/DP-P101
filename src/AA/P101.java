@@ -13,14 +13,25 @@ public class P101 {
     public static PriorityQueue<Node> priorityQueue = new PriorityQueue<>(comparator);
     public static int start, last;
     public static int best_velocity = -1;
-    public static int contador = 0;
-    public static long tiempoInicializacion;
+    public static int contador = 0;  public static long tiempoInicializacion; public static PrintWriter writer;
 
 
-    public static void main(String[] args){
-        /*String[] data = {"1 4", "1 8 3", "1 7 2", "3 7 3", "7 9 4", "3 5 3", "3 9 5", "9 5 5", "3 4 3", "4 5 4", "4 10 2", "4 6 3", "10 5 4", "6 10 4", "6 2 3", "2 8 4", "1 4 1", "11 6 4", "11 4 3", "5 11 5"
-                , "12 2 5", "12 8 4", "12 7 4", "12 9 3", "13 5 4", "13 11 3", "14 13 3", "14 11 3", "14 6 3"};*/
-        String[] data = NodeGenerator(1,5,40, 4);
+    public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
+        /*String[] data = {"1 5", "1 4 3", "1 18 3", "1 37 2", "1 10 1", "2 19 3", "2 37 3", "2 13 1", "2 29 4", "3 30 2", "3 21 3", "3 32 6", "3 23 2",
+                "4 16 4", "4 27 6", "4 1 4", "4 21 6", "5 29 2", "5 17 4", "5 10 3", "5 18 3", "6 7 6", "6 24 1", "6 14 6", "6 37 6", "7 3 3",
+                "7 36 3", "7 26 5", "7 23 1", "8 22 6", "8 10 5", "8 5 5", "8 7 5", "9 3 4", "9 2 5", "9 24 6", "9 29 4", "10 26 5", "10 17 3",
+                "10 16 5", "10 34 6", "11 13 1", "11 5 3", "11 21 5", "11 16 1", "12 24 1", "12 30 4", "12 31 1", "12 34 5", "13 17 2", "13 14 1", "13 2 3",
+                "13 16 2", "14 11 1", "14 27 6", "14 38 2", "14 18 4", "15 8 3", "15 36 3", "15 2 3", "15 27 4", "16 26 2", "16 27 2", "16 22 4", "16 5 1",
+                "17 24 4", "17 19 2", "17 29 1", "17 38 2", "18 40 4", "18 11 4", "18 36 1", "18 20 2", "19 6 1", "19 18 3", "19 32 4", "19 16 4", "20 34 2",
+                "20 36 2", "20 28 5", "20 38 3", "21 30 5", "21 11 3", "21 32 1", "21 27 6", "22 37 1", "22 6 3", "22 2 1", "22 5 5", "23 5 4", "23 38 2",
+                "23 30 2", "23 18 5", "24 13 6", "24 29 6", "24 12 1", "24 39 3", "25 1 3", "25 10 2", "25 4 5", "25 11 4", "26 32 4", "26 2 3", "26 24 5",
+                "26 39 5", "27 11 5", "27 22 3", "27 33 6", "27 23 5", "28 22 6", "28 10 4", "28 15 6", "28 17 5", "29 36 6", "29 10 1", "29 8 1", "29 37 1",
+                "30 16 6", "30 26 2", "30 5 6", "30 27 5", "31 7 3", "31 19 1", "31 13 3", "31 11 1", "32 12 4", "32 10 1", "32 7 6", "32 14 1", "33 19 2",
+                "33 21 3", "33 34 3", "33 8 4", "34 17 1", "34 8 6", "34 29 4", "34 2 6", "35 13 4", "35 34 6", "35 19 2", "35 24 1", "36 15 4", "36 27 6",
+                "36 33 1", "36 24 6", "37 23 3", "37 26 4", "37 15 3", "37 17 5", "38 33 1", "38 11 6", "38 3 4", "38 23 1", "39 21 2", "39 22 6", "39 5 5",
+                "39 15 4", "40 25 2", "40 7 5", "40 19 5", "40 31 4"};*/
+        String[] data = NodeGenerator(1,5,40, 39);
+        writer = new PrintWriter("paraCopiar.txt", "UTF-8");
 
         final long startTime = System.nanoTime();
         bestSolution(data);
@@ -36,7 +47,7 @@ public class P101 {
 
     public static void toFile(long duration, String[] data) throws FileNotFoundException, UnsupportedEncodingException {
 
-        PrintWriter writer = new PrintWriter("ultimoGrafo.txt", "UTF-8");
+        writer = new PrintWriter("ultimoGrafo.txt", "UTF-8");
         writer.println("Tiempo inicialización: "+tiempoInicializacion);
         writer.println("Tiempo algoritmo: "+(duration-tiempoInicializacion));
         writer.println("Nodos explorados: "+contador);
@@ -45,16 +56,15 @@ public class P101 {
         writer.println("Nodo inicial: "+data[0].split("\\s+")[0]);
         writer.println("Nodo final: "+data[0].split("\\s+")[1]);
         writer.print("Grafo: ");
-        for(int i=1;i<data.length;i++)
-            writer.print("["+data[i]+"] ");
-        writer.println();
-        writer.println();
-        writer.println("Para volver a probar: ");
-        for(int i=0;i<data.length;i++)
-            writer.print("\""+data[i]+"\", ");
+        for(int i=1;i<data.length;i++) {
+            if(Math.floorMod(i, 13)==0)
+                writer.println();
+            writer.print("[" + data[i] + "] ");
+        }
         writer.close();
+
     }
-    //Pesimista: Camino aleatorio hacia el nodo final, sino encuentra 0, si encuentra x
+
     public static ArrayList<Integer> bestSolution(String[] data){
         String[] splited = data[0].split("\\s+");
 
@@ -67,6 +77,22 @@ public class P101 {
             final long startTime1 = System.nanoTime();
             initialize(data);
             tiempoInicializacion = System.nanoTime() - startTime1;
+
+            writer.println("Para volver a probar: ");
+
+            for(int i=0;i<data.length;i++) {
+                if(Math.floorMod(i, 13)==0)
+                    writer.println();
+                if (i == data.length-1)
+                    writer.print("\"" + data[i] + "\"");
+                else
+                    writer.print("\"" + data[i] + "\", ");
+            }
+
+            writer.println();
+            writer.println();
+            writer.close();
+
         }
         System.out.println("Inicialización acabada.");
         //Inicio backtracking
@@ -89,6 +115,7 @@ public class P101 {
         }
         return bestWay;
     }
+
     private static void expand(Node n){
         Neighbour neighbour;
         for (int i = 0; i < n.neighbours.size(); i++) {
@@ -99,21 +126,10 @@ public class P101 {
                 no.max_vel = Math.min(neighbour.velocity, n.max_vel);
 
                 contador++;
+                System.out.println(contador);
                 priorityQueue.add(no);
             }
         }
-    }
-
-    //No merece la pena
-    private static int AlgoritmoVoraz(){
-        ArrayList<Integer> checked = new ArrayList<>();
-        Node initial = nodes.get(start);
-        if (initial.isFeasible()) {
-            initial.max_vel = Integer.MAX_VALUE;
-            initial.alReadyChecked.add(initial.id);
-
-        }
-        return 0;
     }
 
     private static void createNodes(int newNode, int newNeighbour, int newVelocity){
@@ -164,19 +180,6 @@ public class P101 {
         }
 
         //printNodes();
-    }
-
-    private static void printNodes(){
-        for (Iterator<Node> it = nodes.values().iterator(); it.hasNext(); ) {
-            Node f = it.next();
-            System.out.print(f.id + " neighbours: ");
-            for(int i=0;i<f.neighbours.size();i++){
-                System.out.print(f.neighbours.get(i).neighB);
-                System.out.print(" velocity[" + f.neighbours.get(i).velocity + "]");
-                System.out.print('\t');
-            }
-            System.out.print('\n');
-        }
     }
 
     public static String[] NodeGenerator(int initial, int last, int n, int v){
